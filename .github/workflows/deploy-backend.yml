@@ -1,0 +1,112 @@
+name: Deploy Subscription Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Supabase CLI
+        run: |
+          curl -L https://github.com/supabase/cli/releases/latest/download/supabase_$(uname -s)_x64.tar.gz | tar xz
+          sudo mv supabase /usr/local/bin
+          supabase --version
+
+      - name: Print environment for debugging
+        run: |
+          echo "Listing supabase directory:"
+          ls -la supabase || echo "No supabase directory found"
+          echo "Listing supabase/migrations directory:"
+          ls -la supabase/migrations || echo "No supabase/migrations directory found"
+
+      - name: Login to Supabase
+        run: |
+          echo "Logging into Supabase..."
+          supabase login --no-browser --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          echo "Linking project..."
+          supabase link --project-ref $(echo $SUPABASE_URL | cut -d '/' -f3 | cut -d '.' -f1) || echo "Failed to link project"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+
+      - name: Apply database migrations
+        run: |
+          # Check if we have migrations to apply
+          if [ -d "supabase/migrations" ] && [ "$(ls -A supabase/migrations)" ]; then
+            echo "Applying database migrations..."
+            supabase db push --project-ref $(echo $SUPABASE_URL | cut -d '/' -f3 | cut -d '.' -f1)
+          else
+            echo "No migrations to apply"
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy Functions
+        run: |
+          # Deploy functions using Supabase CLI
+          cd supabase/functions || echo "No functions directory found"
+          
+          if [ -d "." ]; then
+            echo "Deploying edge functions to Supabase..."
+            # List functions for debugging
+            echo "Available functions:"
+            ls -la
+            
+            for func_dir in */; do
+              if [ -d "$func_dir" ]; then
+                func_name="${func_dir%/}"
+                echo "Deploying $func_name function..."
+                supabase functions deploy $func_name --project-ref $(echo $SUPABASE_URL | cut -d '/' -f3 | cut -d '.' -f1) --no-verify-jwt
+              fi
+            done
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_PROD_SERVICE_ROLE_KEY }}
+          LIGHTSPEED_API_KEY: ${{ secrets.LIGHTSPEED_PROD_API_KEY }}
+          LIGHTSPEED_API_SECRET: ${{ secrets.LIGHTSPEED_PROD_API_SECRET }}
+
+      - name: Load Environment Variables
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> $GITHUB_ENV
+          echo "LIGHTSPEED_API_KEY=${{ secrets.LIGHTSPEED_API_KEY }}" >> $GITHUB_ENV
+          echo "LIGHTSPEED_API_SECRET=${{ secrets.LIGHTSPEED_API_SECRET }}" >> $GITHUB_ENV
+
+      - name: Deploy Migrations & Functions
+        run: |
+          supabase login --no-browser --token ${{ secrets.SUPABASE_CLI_TOKEN }}
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+          # Deploy functions using Supabase CLI
+          cd supabase/functions
+          echo "Deploying edge functions to Supabase..."
+          for func_dir in */; do
+            func_name="${func_dir%/}"
+            echo "Deploying $func_name function..."
+            supabase functions deploy $func_name --project-ref ${{ secrets.SUPABASE_PROJECT_REF }} --no-verify-jwt
+          done
+          
+          # Apply migrations if any
+          cd ../migrations
+          if [ -n "$(ls *.sql 2>/dev/null)" ]; then
+            echo "Applying migrations..."
+            supabase db push
+          fi 

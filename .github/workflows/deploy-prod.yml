@@ -1,0 +1,183 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy-to-production" to confirm production deployment'
+        required: true
+
+jobs:
+  validate-input:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation input
+        if: ${{ github.event.inputs.confirm != 'deploy-to-production' }}
+        run: |
+          echo "Deployment confirmation text does not match required value."
+          echo "You must type 'deploy-to-production' exactly to proceed."
+          exit 1
+
+  verify-subscription-system:
+    needs: validate-input
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install --save @supabase/supabase-js dotenv
+          npm list @supabase/supabase-js || true
+        env:
+          NODE_ENV: development
+
+      - name: Setup local script dependencies
+        run: |
+          echo "Setting up local script dependencies..."
+          mkdir -p scripts/node_modules
+          cd scripts
+          echo '{
+            "name": "subscription-verification",
+            "version": "1.0.0",
+            "dependencies": {
+              "@supabase/supabase-js": "^2.49.9",
+              "dotenv": "^16.5.0"
+            }
+          }' > package.json
+          npm install
+          ls -la node_modules/@supabase || echo "Failed to find @supabase in scripts/node_modules"
+          cd ..
+          echo "NODE_PATH=$PWD/node_modules:$PWD/scripts/node_modules" >> $GITHUB_ENV
+
+      - name: Run subscription verification script
+        run: |
+          echo "Running verification script..."
+          NODE_PATH=$PWD/node_modules:$PWD/scripts/node_modules node scripts/verify-subscription-system.js --prod || { echo "Verification script failed with exit code $?"; exit 1; }
+        env:
+          NODE_ENV: production
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_PROD_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PROD_ANON_KEY }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PAYMENT_GATEWAY_SECRET: ${{ secrets.PAYMENT_GATEWAY_PROD_SECRET }}
+          DEBUG: "true"
+
+  deploy-edge-functions:
+    needs: verify-subscription-system
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Supabase CLI (For Edge Functions)
+        run: |
+          # Get latest release URL directly
+          DOWNLOAD_URL=$(curl -s https://api.github.com/repos/supabase/cli/releases/latest \
+            | grep "browser_download_url.*linux_amd64.tar.gz" \
+            | cut -d '"' -f 4)
+          
+          # Download using resolved URL
+          curl -L -o supabase.tar.gz "$DOWNLOAD_URL"
+          
+          # Extract directly into /usr/local/bin, install and verify
+          sudo tar -xzf supabase.tar.gz -C /usr/local/bin
+          sudo chmod +x /usr/local/bin/supabase
+          supabase --version
+          
+      - name: Login to Supabase
+        run: |
+          supabase login --no-browser --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          echo "Supabase login complete; skipping project link to avoid DB auth issues."
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+
+      - name: Deploy Edge Functions
+        run: |
+          echo "Deploying edge functions to Supabase..."
+          for dir in supabase/functions/*/; do
+            func_name=$(basename "$dir")
+            echo "Deploying $func_name function..."
+            supabase functions deploy $func_name --project-ref $(echo $SUPABASE_URL | cut -d '/' -f3 | cut -d '.' -f1) --no-verify-jwt
+          done
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+          SUPABASE_AUTH_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          # Environment variables for functions
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_PROD_SERVICE_ROLE_KEY }}
+          PAYMENT_GATEWAY_SECRET: ${{ secrets.PAYMENT_GATEWAY_PROD_SECRET }}
+          LIGHTSPEED_API_SECRET: ${{ secrets.LIGHTSPEED_PROD_API_SECRET }}
+          LIGHTSPEED_API_KEY: ${{ secrets.LIGHTSPEED_PROD_API_KEY }}
+
+  run-smoke-tests:
+    needs: deploy-edge-functions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run smoke tests
+        run: node scripts/smoke-test-production.js
+        env:
+          NODE_ENV: production
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_PROD_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PROD_ANON_KEY }}
+
+  notify:
+    needs: run-smoke-tests
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    steps:
+      - name: Send success notification
+        if: ${{ needs.run-smoke-tests.result == 'success' }}
+        run: |
+          echo "Sending success notification to Slack..."
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"✅ *Production Deployment Successful*\nOneBigShowOTT has been successfully deployed to production!"}' \
+          $SLACK_WEBHOOK_URL
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Send failure notification
+        if: ${{ needs.run-smoke-tests.result != 'success' }}
+        run: |
+          echo "Sending failure notification to Slack..."
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"⚠️ *Production Deployment Failed*\nOneBigShowOTT production deployment failed. Please check GitHub Actions logs."}' \
+          $SLACK_WEBHOOK_URL
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }} 

@@ -1,0 +1,13 @@
+  - name: Install Supabase CLI (For Edge Functions)
+    run: |
+      # Get latest Supabase CLI version
+      LATEST_VERSION=$(curl -s https://api.github.com/repos/supabase/cli/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+      
+      # Download correct version for Linux x86_64
+      curl -L -o supabase.tar.gz "https://github.com/supabase/cli/releases/download/${LATEST_VERSION}/supabase_${LATEST_VERSION#v}_linux_amd64.tar.gz"
+      
+      # Extract and install
+      tar -xzf supabase.tar.gz
+      chmod +x supabase
+      sudo mv supabase /usr/local/bin
+      supabase --version 

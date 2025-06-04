@@ -1,0 +1,91 @@
+name: Verify Subscription System
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install --save @supabase/supabase-js dotenv
+
+      - name: Verify subscription system
+        run: |
+          # Create verification script
+          cat > verify.js << 'EOF'
+          const { createClient } = require('@supabase/supabase-js');
+          const dotenv = require('dotenv');
+          
+          // Load environment variables
+          dotenv.config();
+          
+          const supabaseUrl = process.env.SUPABASE_URL;
+          const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          
+          if (!supabaseUrl || !serviceRoleKey) {
+            console.error('Missing required environment variables');
+            process.exit(1);
+          }
+          
+          // Initialize Supabase client with service role
+          const supabase = createClient(supabaseUrl, serviceRoleKey);
+          
+          async function checkSubscriptionSystem() {
+            try {
+              // 1. Check if we can connect to Supabase
+              console.log('Verifying connection to Supabase...');
+              
+              // Simple query to check connection
+              const { data, error } = await supabase
+                .from('subscriptions')
+                .select('count(*)', { count: 'exact' })
+                .limit(0);
+              
+              if (error) {
+                throw new Error(`Failed to connect to Supabase: ${error.message}`);
+              }
+              
+              console.log('Connection to Supabase verified');
+              console.log('All verification checks passed');
+              return true;
+            } catch (error) {
+              console.error('Verification failed:', error.message);
+              process.exit(1);
+            }
+          }
+          
+          checkSubscriptionSystem();
+          EOF
+          
+          # Run verification script
+          node verify.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_PROD_SERVICE_ROLE_KEY }}
+
+      - name: Send notification on failure
+        if: failure()
+        run: |
+          echo "Sending failure notification to Slack..."
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"❌ *Subscription System Alert*\nThe subscription system verification has failed. Please investigate immediately."}' \
+          $SLACK_WEBHOOK_URL
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }} 

@@ -1,0 +1,113 @@
+name: Monitor Subscription System
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Run every 6 hours
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install --save @supabase/supabase-js dotenv
+          npm list @supabase/supabase-js || true
+        env:
+          NODE_ENV: development
+
+      - name: Setup local script dependencies
+        run: |
+          echo "Setting up local script dependencies..."
+          mkdir -p scripts/node_modules
+          cd scripts
+          echo '{
+            "name": "subscription-verification",
+            "version": "1.0.0",
+            "dependencies": {
+              "@supabase/supabase-js": "^2.49.9",
+              "dotenv": "^16.5.0"
+            }
+          }' > package.json
+          npm install
+          ls -la node_modules/@supabase || echo "Failed to find @supabase in scripts/node_modules"
+          cd ..
+          echo "NODE_PATH=$PWD/node_modules:$PWD/scripts/node_modules" >> $GITHUB_ENV
+
+      - name: Run verification script
+        run: |
+          echo "Running verification script..."
+          NODE_PATH=$PWD/node_modules:$PWD/scripts/node_modules node scripts/verify-subscription-system.js --prod || { echo "Verification script failed with exit code $?"; exit 1; }
+        env:
+          NODE_ENV: production
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_PROD_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PROD_ANON_KEY }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DEBUG: "true"
+
+      - name: Run smoke tests
+        run: node scripts/smoke-test-production.js
+        env:
+          NODE_ENV: production
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_PROD_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PROD_ANON_KEY }}
+
+      - name: Send notification on failure
+        if: failure()
+        run: |
+          echo "Sending failure notification to Slack..."
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"❌ *Subscription System Alert*\nThe subscription system monitoring check has failed. Please investigate immediately."}' \
+          $SLACK_WEBHOOK_URL
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  check-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check get-user-subscription function
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.SUPABASE_PROD_URL }}/functions/v1/get-user-subscription
+          method: 'GET'
+          customHeaders: '{"Content-Type": "application/json"}'
+          timeout: 10000
+
+      - name: Check initialize-payment function
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.SUPABASE_PROD_URL }}/functions/v1/initialize-payment
+          method: 'GET'
+          customHeaders: '{"Content-Type": "application/json"}'
+          timeout: 10000
+
+      - name: Check confirm-subscription function
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.SUPABASE_PROD_URL }}/functions/v1/confirm-subscription
+          method: 'GET'
+          customHeaders: '{"Content-Type": "application/json"}'
+          timeout: 10000
+
+      - name: Send notification on failure
+        if: failure()
+        run: |
+          echo "Sending failure notification to Slack..."
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"❌ *Edge Functions Alert*\nOne or more subscription Edge Functions are not responding. Please investigate immediately."}' \
+          $SLACK_WEBHOOK_URL
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }} 

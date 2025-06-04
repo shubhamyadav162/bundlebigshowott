@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "363171386735",
+    "project_id": "bigshow-dev",
+    "storage_bucket": "bigshow-dev.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:363171386735:android:0123456789abcdef",
+        "android_client_info": {
+          "package_name": "com.shubhamyadav1.bigshow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "363171386735-3m36t21s3nv6qa6ufb8dlpg4c09cjlfd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtYkUzRdHLZWLfMnXBGMF8VWmEI0dFiMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "363171386735-3m36t21s3nv6qa6ufb8dlpg4c09cjlfd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ]
+} 

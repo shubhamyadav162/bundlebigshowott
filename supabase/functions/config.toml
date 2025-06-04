@@ -1,0 +1,39 @@
+[[functions]]
+name = "initialize-payment"
+verify_jwt = false
+
+[[functions]]
+name = "lightspeed-webhook-handler"
+verify_jwt = false
+
+[[functions]]
+name = "check-payment-status"
+verify_jwt = false
+
+[[functions]]
+name = "payment-webhook"
+verify_jwt = false
+
+[[functions]]
+name = "lightspeed-payment-initiate"
+verify_jwt = false
+
+[[functions]]
+name = "lightspeed-payment-status"
+verify_jwt = false
+
+[[functions]]
+name = "confirm-subscription"
+verify_jwt = false
+
+[[functions]]
+name = "get-user-subscription"
+verify_jwt = true
+
+[[functions]]
+name = "cancel-subscription"
+verify_jwt = true
+
+[[functions]]
+name = "list-all-subscriptions"
+verify_jwt = true 

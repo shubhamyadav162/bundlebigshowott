@@ -1,0 +1,46 @@
+# Exclude Expo cache
+.expo/
+# Exclude local build temp dir
+tmp_build_dir/
+# Exclude Supabase management server code
+supabase-mcp-server/
+# Exclude Python venv directories
+**/venv/
+# Exclude cloud functions
+functions/
+# Always ignore node modules and git history
+node_modules/
+.git/
+# Ignore native folders when using Expo EAS build
+/android
+/ios
+# Exclude additional monorepo directories not needed for the mobile app build
+.vercel/
+.github/
+supabase/
+supabase-mcp-main/
+template/
+api/
+migrations/
+OneBigShowOTT/
+big-show-ott-super-admin-dashboard/
+# Exclude large web-only assets
+# assets/webimages/
+# Exclude other scripts except prepare-eas-build.js
+scripts/*
+!scripts/prepare-eas-build.js
+# Exclude docs and config
+*.md
+*.txt
+rename-mapping.txt
+cursorlightspeedgatwayintregrationbyai.md
+pda.md
+coontext.md
+context.md
+bunny.md
+# Exclude credentials and non-app config
+creds.json
+keystore.json
+lightspeed.env
+mcp.yaml
+upload-cert.pem 

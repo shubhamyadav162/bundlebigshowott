@@ -1,0 +1,51 @@
+name: Deploy Edge Functions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/functions/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Supabase CLI
+        run: |
+          # Install Supabase CLI directly from GitHub releases
+          curl -L https://github.com/supabase/cli/releases/latest/download/supabase_$(uname -s)_x64.tar.gz | tar xz
+          sudo mv supabase /usr/local/bin
+          # Verify installation
+          supabase --version
+          
+      - name: Login to Supabase
+        run: |
+          supabase login --no-browser --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          supabase link --project-ref $(echo $SUPABASE_URL | cut -d '/' -f3 | cut -d '.' -f1)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+
+      - name: Deploy Edge Functions
+        run: |
+          # Deploy each function to Supabase
+          cd supabase/functions
+          echo "Deploying edge functions to Supabase..."
+          for func_dir in */; do
+            func_name="${func_dir%/}"
+            echo "Deploying $func_name function..."
+            supabase functions deploy $func_name --project-ref $(echo $SUPABASE_URL | cut -d '/' -f3 | cut -d '.' -f1) --no-verify-jwt
+          done
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+          SUPABASE_AUTH_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          # Environment variables for functions
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_PROD_SERVICE_ROLE_KEY }}
+          PAYMENT_GATEWAY_SECRET: ${{ secrets.PAYMENT_GATEWAY_PROD_SECRET }}
+          LIGHTSPEED_API_SECRET: ${{ secrets.LIGHTSPEED_PROD_API_SECRET }}
+          LIGHTSPEED_API_KEY: ${{ secrets.LIGHTSPEED_PROD_API_KEY }} 

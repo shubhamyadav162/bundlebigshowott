@@ -1,0 +1,75 @@
+{
+  "expo": {
+    "name": "BigShow OTT",
+    "slug": "big-show",
+    "scheme": "bigshow",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "web": {
+      "favicon": "./assets/photo_2025_05_30_16_14_57.jpg"
+    },
+    "android": {
+      "package": "com.shubhamyadav1.bigshow",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/photo_2025_05_30_16_14_57.jpg",
+        "backgroundColor": "#000000"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.VIBRATE"
+      ],
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "buildToolsVersion": "34.0.0",
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "kotlinVersion": "1.7.1"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e443ff19-a088-453f-b755-1da94ddc61f6"
+      },
+      "FIREBASE_API_KEY": "AIzaSyBtYkUzRdHLZWLfMnXBGMF8VWmEI0dFiMw",
+      "FIREBASE_AUTH_DOMAIN": "bigshow-dev.firebaseapp.com",
+      "FIREBASE_PROJECT_ID": "bigshow-dev",
+      "FIREBASE_STORAGE_BUCKET": "bigshow-dev.appspot.com",
+      "FIREBASE_MESSAGING_SENDER_ID": "363171386735",
+      "FIREBASE_APP_ID": "1:363171386735:web:5a47d94cd8edace5e03b8c",
+      "GOOGLE_ANDROID_CLIENT_ID": "745840351798-7ffhuop70knsuj8hujcf275cjom4e831.apps.googleusercontent.com",
+      "GOOGLE_WEB_CLIENT_ID": "745840351798-7ffhuop70knsuj8hujcf275cjom4e831.apps.googleusercontent.com",
+      "androidClientId": "745840351798-7ffhuop70knsuj8hujcf275cjom4e831.apps.googleusercontent.com",
+      "BUNNY_STORAGE_ZONE": "bigshow",
+      "BUNNY_STORAGE_API_KEY": "5d330187-9ffb-4db6-992a-3cc6833f18940e6bbbe1-e118-43ed-8c35-ad75a4dfaf5f",
+      "BUNNY_STREAM_LIBRARY_ID": "425837",
+      "BUNNY_STREAM_CDN_HOSTNAME": "vz-ac925eab-8c7.b-cdn.net",
+      "BUNNY_STREAM_API_KEY": "b77199c3-2a8c-473e-a1b73b510fc0-4083-4687"
+    },
+    "ios": {
+      "bundleIdentifier": "com.shubhamyadav1.bigshow",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/photo_2025_05_30_16_14_57.jpg",
+      "resizeMode": "cover",
+      "backgroundColor": "#000000"
+    }
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "cli": {
+    "version": ">= 0.60.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug",
+        "image": "ubuntu-22.04-jdk-17-ndk-r21e",
+        "env": {
+          "ANDROID_NDK_HOME": "/home/expo/ndk/25.1.8937393"
+        }
+      },
+      "env": {
+        "SUPABASE_URL": "https://hjsdcsatfcysrwsryngu.supabase.co",
+        "SUPABASE_DB_PASSWORD": "GZ7rsixQGl1ZBZ6R",
+        "NODE_ENV": "development",
+        "LIGHTSPEED_ENV": "sandbox"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "env": {
+          "ANDROID_NDK_HOME": "/home/expo/ndk/25.1.8937393"
+        },
+        "image": "ubuntu-22.04-jdk-17-ndk-r21e",
+        "autoIncrement": true,
+        "credentialsSource": "remote"
+      },
+      "env": {
+        "SUPABASE_URL": "https://hjsdcsatfcysrwsryngu.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhqc2Rjc2F0ZmN5c3J3c3J5bmd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcxMDIwOTEsImV4cCI6MjA2MjY3ODA5MX0.2L1gHtRKDrfBdEIfK-Lz-5HMHeLmm1TDVyWBsB8iwX3I7vBMYmBTlVqpgiFXCzxX6AXXXXE-pUDp5C2j3JTNyw",
+        "NODE_ENV": "development",
+        "LIGHTSPEED_ENV": "sandbox",
+        "LIGHTSPEED_API_KEY": "b7f32871-b355-4aa7-96cb-a0fe3821b368",
+        "LIGHTSPEED_API_SECRET": "1uFp3tNWlS4PzmvyYPEnaM2sHIqYEbir"
+      }
+    },
+    "preview-local": {
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "image": "ubuntu-22.04-jdk-17-ndk-r21e"
+      },
+      "developmentClient": false,
+      "distribution": "internal",
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "env": {
+        "SUPABASE_URL": "https://hjsdcsatfcysrwsryngu.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhqc2Rjc2F0ZmN5c3J3c3J5bmd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcxMDIwOTEsImV4cCI6MjA2MjY3ODA5MX0.2L1gHtRKDrfBdEIfK-Lz-5HMHeLmm1TDVyWBsB8iwX3I7vBMYmBTlVqpgiFXCzxX6AXXXXE-pUDp5C2j3JTNyw",
+        "ANDROID_NDK_HOME": "/home/expo/ndk/25.1.8937393",
+        "NODE_ENV": "development",
+        "LIGHTSPEED_ENV": "sandbox",
+        "LIGHTSPEED_API_KEY": "b7f32871-b355-4aa7-96cb-a0fe3821b368",
+        "LIGHTSPEED_API_SECRET": "1uFp3tNWlS4PzmvyYPEnaM2sHIqYEbir"
+      }
+    },
+    "local": {
+      "android": {
+        "gradleCommand": ":app:assembleRelease",
+        "withoutCredentials": true,
+        "buildType": "apk",
+        "image": "ubuntu-22.04-jdk-17-ndk-r21e"
+      },
+      "developmentClient": false
+    },
+    "production": {
+      "distribution": "store",
+      "android": {
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease",
+        "env": {
+          "ANDROID_NDK_HOME": "/home/expo/ndk/25.1.8937393"
+        },
+        "image": "ubuntu-22.04-jdk-17-ndk-r21e",
+        "autoIncrement": true,
+        "credentialsSource": "remote"
+      },
+      "ios": {
+        "buildConfiguration": "Release",
+        "credentialsSource": "remote",
+        "autoIncrement": true
+      },
+      "env": {
+        "SUPABASE_URL": "https://hjsdcsatfcysrwsryngu.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhqc2Rjc2F0ZmN5c3J3c3J5bmd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcxMDIwOTEsImV4cCI6MjA2MjY3ODA5MX0.2L1gHtRKDrfBdEIfK-Lz-5HMHeLmm1TDVyWBsB8iwX3I7vBMYmBTlVqpgiFXCzxX6AXXXXE-pUDp5C2j3JTNyw",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhqc2Rjc2F0ZmN5c3J3c3J5bmd1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NzEwMjA5MSwiZXhwIjoyMDYyNjc4MDkxfQ.BR-A3TEEErWOhUw8vHSy0jkToDsGGqNGCXiRwSpLrDk",
+        "SUPABASE_JWT_SECRET": "2L1gHtRKDrfBdEIfK+Lz+5HMHeLmm1TDVyWBsB8iwX3I7vBMYmBTlVqpgiFXCzxX6AXXXXE+pUDp5C2j3JTNyw==",
+        "SUPABASE_PROJECT_REF": "hjsdcsatfcysrwsryngu",
+        "SUPABASE_DB_PASSWORD": "GZ7rsixQGl1ZBZ6R",
+        "SUPABASE_REGION": "ap-south-1",
+        "SUPABASE_ACCESS_TOKEN": "sbp_9a62944d9539e276e7d5a523b9bd53023787c045",
+        "LIGHTSPEED_ENV": "live",
+        "LIGHTSPEED_API_KEY": "your-live-lightspeed-api-key",
+        "LIGHTSPEED_API_SECRET": "your-live-lightspeed-api-secret",
+        "APP_URL": "https://onebigshow.com",
+        "EAS_SKIP_AUTO_FINGERPRINT": "1"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "production",
+        "releaseStatus": "completed"
+      },
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "your-app-store-connect-app-id",
+        "appleTeamId": "your-apple-team-id"
+      }
+    }
+  }
+}

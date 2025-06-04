@@ -1,0 +1,16 @@
+{
+  "name": "bigshow-ott-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "big-show": "file:..",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "firebase-admin": "^11.7.0",
+    "jose": "^6.0.11",
+    "node-fetch": "^3.3.2"
+  }
+}

@@ -1,0 +1,10 @@
+# Exclude Expo cache
+.expo/
+# Exclude local build temp dir
+tmp_build_dir/
+# Exclude Supabase management server code
+supabase-mcp-server/
+# Exclude Python venv directories
+**/venv/
+# Exclude cloud functions
+functions/ 

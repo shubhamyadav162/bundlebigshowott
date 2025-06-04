@@ -1,0 +1,23 @@
+version: "1"
+
+profiles:
+  production:
+    functions:
+      - name: create-payment-session
+        entrypoint: ./functions/create-payment-session
+        verify_jwt: true
+        env:
+          - SUPABASE_URL=${SUPABASE_URL}
+          - SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+          - LIGHTSPEED_API_KEY=${LIGHTSPEED_API_KEY}
+
+      - name: lightspeed-webhook
+        entrypoint: ./functions/lightspeed-webhook
+        verify_jwt: false
+        env:
+          - SUPABASE_URL=${SUPABASE_URL}
+          - SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+          - LIGHTSPEED_API_SECRET=${LIGHTSPEED_API_SECRET}
+
+    migrations:
+      - path: ./migrations
